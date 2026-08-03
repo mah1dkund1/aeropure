@@ -18,6 +18,9 @@ public class Reading {
 
     private Long id;
 
+    private Integer deviceId;
+
+
     private Double airTemperature;
     private Double airHumidity;
     private Double atmosPressure;
