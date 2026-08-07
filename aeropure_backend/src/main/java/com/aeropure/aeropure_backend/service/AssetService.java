@@ -2,9 +2,14 @@ package com.aeropure.aeropure_backend.service;
 
 import com.aeropure.aeropure_backend.model.Asset;
 import com.aeropure.aeropure_backend.model.AssetMaintenanceHistory;
+import com.aeropure.aeropure_backend.repository.AssetDocumentRepository;
+import com.aeropure.aeropure_backend.repository.AssetImageRepository;
 import com.aeropure.aeropure_backend.repository.AssetMaintenanceHistoryRepository;
 import com.aeropure.aeropure_backend.repository.AssetRepository;
 import org.springframework.stereotype.Service;
+
+import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,11 +23,17 @@ public class AssetService {
 
     private final AssetRepository assetRepository;
     private final AssetMaintenanceHistoryRepository maintenanceHistoryRepository;
+    // Add these two repositories to AssetService
+    private final AssetImageRepository assetImageRepository;
+    private final AssetDocumentRepository assetDocumentRepository;
 
-    public AssetService(AssetRepository assetRepository, AssetMaintenanceHistoryRepository maintenanceHistoryRepository)
-    {
+    // Updated constructor
+    public AssetService(AssetRepository assetRepository,AssetMaintenanceHistoryRepository maintenanceHistoryRepository, AssetImageRepository assetImageRepository,
+                        AssetDocumentRepository assetDocumentRepository) {
         this.assetRepository = assetRepository;
         this.maintenanceHistoryRepository = maintenanceHistoryRepository;
+        this.assetImageRepository = assetImageRepository;
+        this.assetDocumentRepository = assetDocumentRepository;
     }
 
     public Asset createAsset(Asset asset){
@@ -103,11 +114,21 @@ public Asset updateAsset(Long id, Asset updatedFields, String maintenanceAction)
 }
 
 // Delete
-
+@Transactional
     public boolean deleteAsset(Long id) {
-        if (!assetRepository.existsById(id)) {
+        Optional<Asset> assetOpt = assetRepository.findById(id);
+        if (assetOpt.isEmpty()) {
             return false;
         }
+
+        Asset asset = assetOpt.get();
+
+        // Delete child records first — order matters here
+        maintenanceHistoryRepository.deleteByAsset(asset);
+        assetImageRepository.deleteByAsset(asset);
+        assetDocumentRepository.deleteByAsset(asset);
+
+        // Now safe to delete the parent
         assetRepository.deleteById(id);
         return true;
     }
