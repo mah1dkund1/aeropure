@@ -47,7 +47,7 @@ public class Reading {
 
     @JsonProperty("valueO3")
     private Integer valueO3;
-    
+
     private Integer airQualityIndex;
 
     private String versionNo;

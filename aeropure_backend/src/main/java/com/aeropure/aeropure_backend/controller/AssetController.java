@@ -9,6 +9,7 @@ import com.aeropure.aeropure_backend.repository.AssetDocumentRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.aeropure.aeropure_backend.dto.AssetResponse;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,11 +118,17 @@ public class AssetController {
         int toIndex = Math.min(fromIndex + pageSize, total);
         List<Asset> paged = all.subList(fromIndex, toIndex);
 
+        // map to response shape the frontend expects
+        // map to response shape the frontend expects
+        List<AssetResponse> items = paged.stream()
+                .map(assetService::toResponse)
+                .toList();
+
         Map<String, Object> response = new HashMap<>();
         response.put("total", total);
         response.put("page", page);
         response.put("pageSize", pageSize);
-        response.put("items", paged);
+        response.put("items", items);
         return ResponseEntity.ok(response);
     }
 
@@ -134,8 +141,7 @@ public class AssetController {
             error.put("error", "Asset not found");
             return ResponseEntity.status(404).body(error);
         }
-        return ResponseEntity.ok(asset);
-    }
+        return ResponseEntity.ok(assetService.toResponse(asset));    }
 
     // PUT/PATCH /assets/{id} — update asset
     @RequestMapping(value = "/{id}", method = {RequestMethod.PUT, RequestMethod.PATCH})

@@ -10,6 +10,13 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import com.aeropure.aeropure_backend.dto.AssetResponse;
+import com.aeropure.aeropure_backend.model.AssetImage;
+import com.aeropure.aeropure_backend.model.AssetMaintenanceHistory;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -141,7 +148,29 @@ public Asset updateAsset(Long id, Asset updatedFields, String maintenanceAction)
         });
     }
 
+    // build full response with nested history and images
+    public AssetResponse toResponse(Asset asset) {
+        AssetResponse r = AssetResponse.from(asset);
 
+        // nest maintenance history
+        List<Map<String, Object>> history = new ArrayList<>();
+        for (AssetMaintenanceHistory h : maintenanceHistoryRepository.findByAsset(asset)) {
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("action", h.getAction());
+            entry.put("date", h.getDate());
+            history.add(entry);
+        }
+        r.setMaintenanceHistory(history);
+
+        // nest image filenames
+        List<String> images = new ArrayList<>();
+        for (AssetImage img : assetImageRepository.findByAsset(asset)) {
+            images.add(img.getFilename());
+        }
+        r.setImages(images);
+
+        return r;
+    }
 
 
 
