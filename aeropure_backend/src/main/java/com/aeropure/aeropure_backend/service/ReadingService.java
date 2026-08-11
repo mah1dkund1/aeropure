@@ -4,7 +4,7 @@ import com.aeropure.aeropure_backend.model.Reading;
 import com.aeropure.aeropure_backend.repository.ReadingRepository;
 import org.springframework.stereotype.Service;
 
-
+import java.time.ZoneOffset;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class ReadingService {
     }
 
     public Reading saveReading(Reading reading) {
-        reading.setReceivedAt(LocalDateTime.now());
+        reading.setReceivedAt(LocalDateTime.now(ZoneOffset.UTC));
         return readingRepository.save(reading);
     }
 
@@ -53,6 +53,13 @@ public class ReadingService {
 
     }
 
+    // fetch by range, device optional
+    public List<Reading> getReadingsInRange(Integer deviceId, LocalDateTime start, LocalDateTime end, int limit) {
+        List<Reading> all = (deviceId != null)
+                ? readingRepository.findByDeviceIdAndReceivedAtBetweenOrderByReceivedAtDesc(deviceId, start, end)
+                : readingRepository.findByReceivedAtBetweenOrderByReceivedAtDesc(start, end);
+        return all.size() > limit ? all.subList(0, limit) : all;
+    }
     // get devices
 
     public List<Integer> getDistinctDeviceIds() {

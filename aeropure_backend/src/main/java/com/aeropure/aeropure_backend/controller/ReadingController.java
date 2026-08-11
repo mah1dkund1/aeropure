@@ -22,29 +22,39 @@ public class ReadingController {
     public ReadingController(ReadingService readingService) {
         this.readingService = readingService;
     }
-
     @GetMapping("/data")
     public ResponseEntity<Map<String, Object>> getData(
             @RequestParam(required = false) Integer deviceID,
-            @RequestParam(defaultValue= "10") int limit)
-    {
-        List<Reading> data = readingService.getReadings(deviceID, limit);
+            @RequestParam(required = false) String start,
+            @RequestParam(required = false) String end,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        List<Reading> data;
+
+        // if a range is given, filter by it; otherwise newest N
+        if (start != null && end != null) {
+            LocalDateTime startUtc = parseUtc(start);
+            LocalDateTime endUtc = parseUtc(end);
+            data = readingService.getReadingsInRange(deviceID, startUtc, endUtc, limit);
+        } else {
+            data = readingService.getReadings(deviceID, limit);
+        }
 
         long total = readingService.countReadings(deviceID);
-
-        long remaining = Math.max(total-limit, 0);
+        long remaining = Math.max(total - limit, 0);
 
         Map<String, Object> response = new HashMap<>();
-
         response.put("total", total);
         response.put("limit", limit);
         response.put("remaining", remaining);
         response.put("data", data);
 
         return ResponseEntity.ok(response);
-
     }
 
+    private LocalDateTime parseUtc(String s) {
+        return LocalDateTime.parse(s.replace("Z", ""));
+    }
 
 
     // POST data/ range
