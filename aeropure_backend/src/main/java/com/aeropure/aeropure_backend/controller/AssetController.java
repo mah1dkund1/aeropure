@@ -189,10 +189,14 @@ public class AssetController {
     // GET /assets/files/{filename} — serve uploaded file
     @GetMapping("/files/{filename}")
     public ResponseEntity<byte[]> serveFile(@PathVariable String filename) throws IOException {
-        Path filePath = Paths.get(UPLOAD_FOLDER, filename);
-        if (!Files.exists(filePath)) {
+        Path baseDir = Paths.get(UPLOAD_FOLDER).toAbsolutePath().normalize();
+        Path filePath = baseDir.resolve(filename).normalize();
+
+        // stop anything escaping the uploads folder
+        if (!filePath.startsWith(baseDir) || !Files.exists(filePath)) {
             return ResponseEntity.notFound().build();
         }
+
         byte[] content = Files.readAllBytes(filePath);
         return ResponseEntity.ok()
                 .header("Content-Type", Files.probeContentType(filePath))
@@ -208,6 +212,7 @@ public class AssetController {
             if (file.isEmpty()) continue;
             String filename = file.getOriginalFilename();
             if (filename == null) continue;
+            filename = Paths.get(filename).getFileName().toString();
 
             String ext = filename.contains(".")
                     ? filename.substring(filename.lastIndexOf('.') + 1).toLowerCase()

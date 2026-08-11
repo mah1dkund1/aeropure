@@ -136,7 +136,7 @@ public Asset updateAsset(Long id, Asset updatedFields, String maintenanceAction)
     public void markAssetActive(String deviceCode) {
         assetRepository.findAll().stream().filter(a -> deviceCode.equals(a.getDeviceCode())).findFirst().ifPresent(asset -> {
             asset.setLastActiveAt((LocalDateTime.now()) );
-            asset.setStatus("actvie");
+            asset.setStatus("active");
             assetRepository.save(asset);
         });
     }
